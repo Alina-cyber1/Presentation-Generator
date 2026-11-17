@@ -1,1 +1,40 @@
+version: "3.8"
 
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000" # FastAPI REST
+      - "13500:13500" # MCP Streamable HTTP
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./legacy:/app/legacy
+    env_file: .env
+    command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: presentation_db
+      POSTGRES_USER: pres_user
+      POSTGRES_PASSWORD: pres_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+volumes:
+  pgdata:
+  minio_data:
